@@ -8,6 +8,7 @@
     "license": "ISC",
     "description": "Best Static-Outer-State For React",
     "dependencies": {
+        "react": "^16.8.6"
     },
     "homepage": "https://github.com/lingobong/react-lingost",
     "author": {

@@ -1,5 +1,6 @@
 import React from 'react'
 
+const LingostContext = React.createContext()
 const defaultState = { __exists: false }
 const state = new Proxy(defaultState, {
     get(target, key) {
@@ -148,39 +149,65 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
                 
                 return props
             }
-            reRenderByState = () => {
-                const isChanged = function (now, target) {
-                    let changed = false
-                    for (let key in now) {
-                        if (now[key] != null && typeof now[key] == 'object') {
-                            changed = typeof target[key] == 'object' ? isChanged(now[key], target[key]) : true
-                        } else {
-                            changed = now[key] !== target[key]
-                        }
-
-                        if (changed){
-                            return changed
-                        }
+            isChanged = function (now, target) {
+                let changed = false
+                for (let key in now) {
+                    if (now[key] != null && typeof now[key] == 'object') {
+                        changed = typeof target[key] == 'object' ? this.isChanged(now[key], target[key]) : true
+                    } else {
+                        changed = now[key] !== target[key]
                     }
-                    return changed
+
+                    if (changed){
+                        return changed
+                    }
                 }
+                return changed
+            }
+            reRenderByState = () => {
 
                 let nowState = this.state
                 let nextState = this.getProps()
-
-
-                alert( isChanged(nowState, nextState) || isChanged(nextState, nowState) )
-                if (isChanged(nowState, nextState) || isChanged(nextState, nowState)) {
+                
+                let changed = false
+                try{
+                    changed = JSON.stringify(nowState) != JSON.stringify(nextState)
+                }catch(e){
+                    changed = this.isChanged(nowState, nextState) || this.isChanged(nextState, nowState)
+                }
+                if (changed) {
+                    this.forceRender = true
                     this.setState(nextState)
+                }
+            }
+            shouldComponentUpdate(nextProps){
+                if ( this.forceRender ) {
+                    this.forceRender = false
+                    return true
+                }else{
+                    let changed = false
+                    try{
+                        changed = JSON.stringify(this.props) != JSON.stringify(nextProps)
+                    }catch(e){
+                        for (let propsKey of Object.keys(this.props)) {
+                            if (propsKey == 'children') continue;
+                            if (this.props[propsKey] !== nextProps[propsKey]) {
+                                changed = true
+                                break
+                            }
+                        }
+                    }
+                    return changed
                 }
             }
             componentWillUnmount(){
                 connectComponentList[this.connectComponentListIdx] = null
             }
             render(){
-                return <ToConnectComponent {...this.state} {...this.props} />
+                return (<ToConnectComponent {...this.state} {...this.props}/>)
             }
         }
+
         return Connect
     }
 }

@@ -93,4 +93,77 @@ function stateToProps(state) {
     return { nickname: state.user.nickname }
 }
 
+// `function stateToProps()`  에서 사용되는 state값은 항상 'String', 'Number', 'Boolean' 형태여야합니다
+// The state value used in `function stateToProps ()` should always be of type 'String', 'Number', 'Boolean'
+
+// `return {user: state.user}` 처럼 'Object'를 반환하지 말고, `return {nickname: state.user.nickname}`처럼 'String', 'Number', 'Boolean'를 반환하세요.
+// `return { user:{ nickname: state.user.nickname } }` 이런 형태도 가능합니다.
+// state를 사용한 값에 대해서만 'String', 'Number', 'Boolean'가 반환되게 해주세요.
+
+// Do not return 'Object' like `return {user: state.user}`, but return 'String', 'Number', 'Boolean' like `return {nickname: state.user.nickname}`
+// `return {user: {nickname: state.user.nickname}}` This type is also possible.
+// Just let 'String', 'Number', 'Boolean' be returned for values using state.
+```
+
+# Example
+### Use with the component wrapper function, such as `LangReloader` in` react-g-lang`.
+`react-g-lang`의 `LangReloader`와 같은, component wrapper function과 함께 쓰기
+
++ Before
+```js
+import { setLanguage, setLanguages, onChangeLanguage } from 'g-lang'
+import { lang, LangReloader } from 'react-g-lang'
+
+export default LangReloader(App)
+```
++ After
+```js
+import { setLanguage, setLanguages, onChangeLanguage } from 'g-lang'
+import { lang, LangReloader } from 'react-g-lang'
+import { createState, passStateToProps, useMiddleware } from 'react-lingost'
+
+useMiddleware(LangReloader) // <<== add this
+
+
+export default passStateToProps(App)
+```
+
+# Example
+### createState
+```js
+import { createState } from 'react-lingost'
+// make state
+let user = createState('stateName', { title:'abcd' })
+
+// 
+/*
+`user` variable has the following methods
+    setState
+    notReRenderedInRealtimeState
+*/
+```
+
+### passStateToProps
+```js
+import { passStateToProps } from 'react-lingost'
+
+const stateToProps = ( { stateName } ) => ({
+    title: stateName.title
+})
+const __Test1 = (props)=>(<Text>{props.name}</Text>)
+const Test1 = passStateToProps( stateToProps )( __Test1 )
+
+// <Test1 /> Component will be <Test1 title='abcd' />
+```
+
+### useMiddleware
++ See the example above
+
+### createState.setState
+```js
+user.setState({ title:'abcde' })
+// The above code will replace <Test1 title='abcd' /> with <Test1 title='abcde' />
+
+user.setState({ descripiton:'hi' })
+// The above code will not re-render <Test1 />, because Test1 does not refer to stateName.description
 ```

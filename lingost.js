@@ -21,6 +21,7 @@ const state = new Proxy(defaultState, {
 });
 
 const connectComponentList = []
+const componentWrapperFunctions = []
 const setStateByNames = {}
 
 let usedKeys = {}
@@ -128,6 +129,13 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
     }
     fn = typeof fn == 'function' ? fn : () => ({})
     return function(ToConnectComponent: React.Component){
+        for (let componentWrapperFunction of componentWrapperFunctions) {
+            try{
+                ToConnectComponent = componentWrapperFunction(ToConnectComponent)
+            }catch(e){
+                throw new Error(componentWrapperFunction ? componentWrapperFunction.toString() : e.toString())
+            }
+        }
         class Connect extends React.Component{
             constructor(p){
                 super(p)
@@ -211,7 +219,11 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
         return Connect
     }
 }
+function _useMiddleware( componentWrapperFunction: React = (component) => {} ){
+    componentWrapperFunctions.push(componentWrapperFunction)
+}
 
 
+export const useMiddleware = _useMiddleware
 export const createState = _createState
 export const passStateToProps = _passStateToProps

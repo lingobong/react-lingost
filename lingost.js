@@ -227,3 +227,4 @@ function _useMiddleware( componentWrapperFunction: React = (component) => {} ){
 export const useMiddleware = _useMiddleware
 export const createState = _createState
 export const passStateToProps = _passStateToProps
+export default { useMiddleware, createState, passStateToProps }

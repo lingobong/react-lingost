@@ -128,7 +128,7 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
         }
     }
     fn = typeof fn == 'function' ? fn : () => ({})
-    return function(ToConnectComponent: React.Component){
+    return function passStateToProps<T>(ToConnectComponent: T): T{
         for (let componentWrapperFunction of componentWrapperFunctions) {
             try{
                 ToConnectComponent = componentWrapperFunction(ToConnectComponent)

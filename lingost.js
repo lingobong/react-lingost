@@ -1,24 +1,8 @@
 import React from 'react'
 
 const LingostContext = React.createContext()
-const defaultState = { __exists: false }
-const state = new Proxy(defaultState, {
-    get(target, key) {
-        if (key !== '__exists' && key !== 'toJSON') {
-            if(target[key] === undefined) {
-                target[key] = createInfiniteObjectProxy({})
-                target.__exists = true
-            }
-        }
-        return target[key]
-    },
-    set(target, key, value){
-        if (key !== '__exists' && key !== 'toJSON') {
-            target.__exists = true
-            target[key] = value
-        }
-    }
-});
+const defaultState = { }
+const state = defaultState;
 
 const connectComponentList = []
 const componentWrapperFunctions = []
@@ -26,65 +10,14 @@ const setStateByNames = {}
 
 let usedKeys = {}
 
-const createInfiniteObjectProxy = (defaultState) => {
-	if (Object.keys(defaultState).length > 0) {
-		defaultState.__exists = true
-    }else{
-		defaultState.__exists = false
-    }
-    return new Proxy(defaultState, {
-        get(target, key) {
-			if (key !== '__exists' && key !== 'toJSON') {
-                if(target[key] === undefined) {
-                    target[key] = createInfiniteObjectProxy({})
-                    target.__exists = true
-                }
-            }
-            return target[key]
-        },
-        set(target, key, value){
-			if (key !== '__exists' && key !== 'toJSON') {
-                target.__exists = true
-                target[key] = value
-            }
-        },
-    })
-}
-const defaultStateToInfiniteProxy = (defaultState) => {
-    for (let defaultStateIdx in defaultState) {
-        if (!!defaultState[defaultStateIdx] && ['Object','Array'].indexOf(defaultState[defaultStateIdx].constructor.name) != -1) {
-            defaultStateToInfiniteProxy(defaultState[defaultStateIdx])
-            defaultState[defaultStateIdx] = createInfiniteObjectProxy(defaultState[defaultStateIdx])
-        }
-    }
-}
-
 function _createState(stateName, defaultState = {}){
 
-    defaultState.__exists = Object.keys(defaultState).filter(k=>k!=='__exists').length > 0
-    defaultStateToInfiniteProxy(defaultState)
     let proxyObject = new Proxy(defaultState, {
         get(target, key) {
-            if (key !== '__exists' && key !== 'toJSON') {
-                if(target[key] === undefined) {
-                    target[key] = createInfiniteObjectProxy({})
-                }
-                if(!usedKeys[stateName]) usedKeys[stateName] = []
-                usedKeys[stateName].push(key)
-            }else{
-                return !!target[key]
-            }
+            if(!usedKeys[stateName]) usedKeys[stateName] = []
+            usedKeys[stateName].push(key)
             return target[key]
-        },
-        set(target, key, value){
-            if (key !== '__exists' && key !== 'toJSON') {
-                if (!!value && value.constructor.name === 'Object') {
-                    target[key] = createInfiniteObjectProxy(value)
-                }else{
-                    target[key] = value
-                }
-            }
-        },
+        }
     });
 
     const setState = ( newState ) => {

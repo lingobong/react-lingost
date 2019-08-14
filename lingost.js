@@ -70,11 +70,10 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
             }
         }
         class Connect extends React.Component{
-            constructor(p){
-                super(p)
-
+            state={}
+            UNSAFE_componentWillMount(){
                 this.connectComponentListIdx = connectComponentList.push({ component: this, stateNames:{} }) - 1
-                this.state = this.getProps()
+                this.setState(this.getProps());
             }
             getProps = () => {
                 usedKeys = {}

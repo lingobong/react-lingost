@@ -10,9 +10,9 @@ const setStateByNames = {}
 
 let usedKeys = {}
 
-function _createState(stateName, defaultState = {}){
+function _createState<T>(stateName, defaultState: T = {}){
 
-    let proxyObject = new Proxy(defaultState, {
+    let proxyObject: T = new Proxy(defaultState, {
         get(target, key) {
             if(!usedKeys[stateName]) usedKeys[stateName] = []
             usedKeys[stateName].push(key)
@@ -20,7 +20,7 @@ function _createState(stateName, defaultState = {}){
         }
     });
 
-    const setState = ( newState ) => {
+    const setState = ( newState: T ) => {
         let updatedKeys = {}
         for (let newKey in newState) {
             proxyObject[newKey] = newState[newKey]
@@ -48,6 +48,7 @@ function _createState(stateName, defaultState = {}){
     
     let createdState = {
         setState,
+        state: proxyObject,
         notReRenderedInRealtimeState: proxyObject
     }
     

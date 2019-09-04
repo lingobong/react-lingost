@@ -1,7 +1,7 @@
 import React from 'react'
 
 const LingostContext = React.createContext()
-const defaultState = { }
+const defaultState = {}
 const state = defaultState;
 
 const connectComponentList = []
@@ -10,29 +10,29 @@ const setStateByNames = {}
 
 let usedKeys = {}
 
-function _createState<T>(stateName, defaultState: T = {}){
+function _createState<T>(stateName, defaultState: T = {}) {
 
     let proxyObject: T = new Proxy(defaultState, {
         get(target, key) {
-            if(!usedKeys[stateName]) usedKeys[stateName] = []
+            if (!usedKeys[stateName]) usedKeys[stateName] = []
             usedKeys[stateName].push(key)
             return target[key]
         }
     });
 
-    const setState = ( newState: T ) => {
+    const setState = (newState: T) => {
         let updatedKeys = {}
         for (let newKey in newState) {
             proxyObject[newKey] = newState[newKey]
             updatedKeys[newKey] = true
         }
         for (let connected of connectComponentList) {
-            if ( !connected ) {
+            if (!connected) {
                 continue
             }
-            if ( connected.stateNames[stateName] ) {
-                for (let connectedKey of connected.stateNames[stateName]){
-                    if ( updatedKeys[connectedKey] ){
+            if (connected.stateNames[stateName]) {
+                for (let connectedKey of connected.stateNames[stateName]) {
+                    if (updatedKeys[connectedKey]) {
                         connected.component.reRenderByState()
                         break
                     }
@@ -45,35 +45,39 @@ function _createState<T>(stateName, defaultState: T = {}){
     setStateByNames[stateName] = setState
 
     state[stateName] = proxyObject
-    
+
     let createdState = {
         setState,
         state: proxyObject,
         notReRenderedInRealtimeState: proxyObject
     }
-    
+
     return createdState
 }
 
-function _passStateToProps(fn = (state: Object, setStateByName = (name: String, newState: Object) => {}) => {}) {
+function _passStateToProps(fn = (state: Object, setStateByName = (name: String, newState: Object) => { }) => { }) {
     const setStateByName = (name, newState) => {
-        if ( setStateByNames[name] ) {
-            setStateByNames[name]( newState )
+        if (setStateByNames[name]) {
+            setStateByNames[name](newState)
         }
     }
     fn = typeof fn == 'function' ? fn : () => ({})
-    return function passStateToProps<T>(ToConnectComponent: T): T{
-        for (let componentWrapperFunction of componentWrapperFunctions) {
-            try{
-                ToConnectComponent = componentWrapperFunction(ToConnectComponent)
-            }catch(e){
-                throw new Error(componentWrapperFunction ? componentWrapperFunction.toString() : e.toString())
-            }
-        }
-        class Connect extends React.Component{
-            state={}
-            UNSAFE_componentWillMount(){
-                this.connectComponentListIdx = connectComponentList.push({ component: this, stateNames:{} }) - 1
+    return function passStateToProps<T>(ToConnectComponent: T): T {
+        class Connect extends React.Component {
+            state = {}
+            UNSAFE_componentWillMount() {
+
+                let _ToConnectComponent = ToConnectComponent;
+                for (let componentWrapperFunction of componentWrapperFunctions) {
+                    try {
+                        _ToConnectComponent = componentWrapperFunction(_ToConnectComponent)
+                    } catch (e) {
+                        throw new Error(componentWrapperFunction ? componentWrapperFunction.toString() : e.toString())
+                    }
+                }
+                this.ToConnectComponent = _ToConnectComponent;
+
+                this.connectComponentListIdx = connectComponentList.push({ component: this, stateNames: {} }) - 1
                 this.setState(this.getProps());
             }
             getProps = () => {
@@ -82,12 +86,12 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
                 if (connectComponentList[this.connectComponentListIdx]) {
                     let stateNames = connectComponentList[this.connectComponentListIdx].stateNames
                     for (let usedKey in usedKeys) {
-                        if ( !stateNames[usedKey] ) stateNames[usedKey] = []
-                        stateNames[usedKey] = [ ...stateNames[usedKey], ...usedKeys[usedKey] ]
-                        stateNames[usedKey] = stateNames[usedKey].filter((n,i)=>stateNames[usedKey].indexOf(n) == i)
+                        if (!stateNames[usedKey]) stateNames[usedKey] = []
+                        stateNames[usedKey] = [...stateNames[usedKey], ...usedKeys[usedKey]]
+                        stateNames[usedKey] = stateNames[usedKey].filter((n, i) => stateNames[usedKey].indexOf(n) == i)
                     }
                 }
-                
+
                 return props
             }
             isChanged = function (now, target) {
@@ -99,7 +103,7 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
                         changed = now[key] !== target[key]
                     }
 
-                    if (changed){
+                    if (changed) {
                         return changed
                     }
                 }
@@ -109,11 +113,11 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
 
                 let nowState = this.state
                 let nextState = this.getProps()
-                
+
                 let changed = false
-                try{
+                try {
                     changed = JSON.stringify(nowState) != JSON.stringify(nextState)
-                }catch(e){
+                } catch (e) {
                     changed = this.isChanged(nowState, nextState) || this.isChanged(nextState, nowState)
                 }
                 if (changed) {
@@ -121,15 +125,15 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
                     this.setState(nextState)
                 }
             }
-            shouldComponentUpdate(nextProps){
-                if ( this.forceRender ) {
+            shouldComponentUpdate(nextProps) {
+                if (this.forceRender) {
                     this.forceRender = false
                     return true
-                }else{
+                } else {
                     let changed = false
-                    try{
+                    try {
                         changed = JSON.stringify(this.props) != JSON.stringify(nextProps)
-                    }catch(e){
+                    } catch (e) {
                         for (let propsKey of Object.keys(this.props)) {
                             if (propsKey == 'children') continue;
                             if (this.props[propsKey] !== nextProps[propsKey]) {
@@ -141,18 +145,19 @@ function _passStateToProps(fn = (state: Object, setStateByName = (name: String, 
                     return changed
                 }
             }
-            componentWillUnmount(){
+            componentWillUnmount() {
                 connectComponentList[this.connectComponentListIdx] = null
             }
-            render(){
-                return (<ToConnectComponent {...this.state} {...this.props}/>)
+            render() {
+                let ToConnectComponent = this.ToConnectComponent;
+                return (<ToConnectComponent {...this.state} {...this.props} />)
             }
         }
 
         return Connect
     }
 }
-function _useMiddleware( componentWrapperFunction: React = (component) => {} ){
+function _useMiddleware(componentWrapperFunction: React = (component) => { }) {
     componentWrapperFunctions.push(componentWrapperFunction)
 }
 

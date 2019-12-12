@@ -8,15 +8,11 @@ npm install react-lingost
 ```js
 import { createState } from 'react-lingost'
 
-let user = createState('user', {
+export const user = createState('user', {
     logged: false,
     data:{},
     test:[1,2,3,4],
 })
-
-module.exports = {
-    user,
-}
 ```
 
 ## 2. ./app.js
@@ -148,12 +144,26 @@ let user = createState('stateName', { title:'abcd' })
 import { passStateToProps } from 'react-lingost'
 
 const stateToProps = ( { stateName } ) => ({
-    title: stateName.title
+title: stateName.title
 })
-const __Test1 = (props)=>(<Text>{props.name}</Text>)
+const __Test1 = (props)=>(<Text>{props.title}</Text>)
 const Test1 = passStateToProps( stateToProps )( __Test1 )
 
 // <Test1 /> Component will be <Test1 title='abcd' />
+```
+
+### connectProps
+```js
+import { connectProps, passStateToProps } from 'react-lingost'
+
+const __Test1 = (props) => (<Text>{props.number}</Text>)
+const Test1 = connectProps((props) =>
+    passStateToProps(({ stateName }) => ({
+        number: stateName.number * props.multiply,
+    }))(__Test1)
+)
+
+// <Test1 multiply={3}/> Component will be <Test1 number={stateName.number * 3} />
 ```
 
 ### useMiddleware

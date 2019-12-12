@@ -161,8 +161,17 @@ function _useMiddleware(componentWrapperFunction: React = (component) => { }) {
     componentWrapperFunctions.push(componentWrapperFunction)
 }
 
+function _connectProps<F>(fn: F): ReturnType<F> {
+    return class ToConnectComponent extends React.Component {
+        render() {
+            let C = fn(this.props);
+            return <C />;
+        }
+    };
+}
 
 export const useMiddleware = _useMiddleware
 export const createState = _createState
 export const passStateToProps = _passStateToProps
-export default { useMiddleware, createState, passStateToProps }
+export const connectProps = _connectProps
+export default { useMiddleware, createState, passStateToProps, connectProps }
